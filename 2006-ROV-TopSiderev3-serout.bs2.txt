@@ -1,0 +1,466 @@
+'--------------------------------------------------------------------------------------------
+' Coded by Bernard Roth 2006. 
+' I2C Subroutines from Amit Dhariwal, University of Southern California
+'--------------------------------------------------------------------------------------------
+
+
+' {$STAMP BS2}
+' {$PBASIC 2.5}
+
+
+
+
+'*** PIN Declarations ***
+SDA = 7    'output
+SCL = 6
+
+'*** Asign Varibles ***
+forback   VAR     Word
+leftright VAR     Word
+updown    VAR     Word
+
+I2cAddr VAR       Word
+
+
+I2cData  VAR     Word
+
+
+I2cBuf  VAR       Word
+I2cAck  VAR       Word
+I2c_mydata VAR    Word
+SDA     VAR       Word
+SCL     VAR       Word
+'SDAdir  VAR       Word
+
+
+
+'--------------------------------------------------------------------------------------------
+' My I2C subroutines follow
+'--------------------------------------------------------------------------------------------
+
+'-----------------------------------ADC 1100 16 bit 1 channel -----------
+I2cAddr = $90                      'AD0 Write Address -chips id number
+I2CData.LOWBYTE=$8C                'Control Word - configs chip
+I2cData.HIGHBYTE=$00
+GOSUB I2cByteWrite
+PAUSE 1
+
+I2cAddr = $92                      'AD1 Write Address -chips id number
+I2CData.LOWBYTE=$8C                'Control Word - configs chip
+I2cData.HIGHBYTE=$00
+GOSUB I2cByteWrite
+PAUSE 1
+
+I2cAddr = $94                      'AD2 Write Address -chips id number
+I2CData.LOWBYTE=$8C                'Control Word - configs chip
+I2cData.HIGHBYTE=$00
+GOSUB I2cByteWrite
+PAUSE 1
+
+
+Main:
+
+
+I2cAddr = $91                      'Device Read Address
+GOSUB I2cStart
+I2cBuf = I2cAddr
+GOSUB I2cOutByte                   'send Device Address
+I2cAck = 1                         'send Nak
+GOSUB I2cInByte                    'Read Byte 1 (High Order)
+'I2cData1.HIGHBYTE = I2cBuf
+forback = I2cBuf
+I2cAck = 1                         'send Nak
+'GOSUB I2cInByte                    'Read Byte 2 (Low Order)
+'I2CData1.LOWBYTE = I2cBuf
+'I2cAck = 1                         'send Nak
+'GOSUB I2cInByte                    'read Byte 3 (Control Word)
+'I2cAck = 1                         'send Nak
+'I2c_mydata = I2cBuf
+GOSUB I2cStop
+
+
+
+I2cAddr = $93                      'Device Read Address
+GOSUB I2cStart
+I2cBuf = I2cAddr
+GOSUB I2cOutByte                   'send Device Address
+I2cAck = 1                         'send Nak
+GOSUB I2cInByte                    'Read Byte 1 (High Order)
+'I2cData2.HIGHBYTE = I2cBuf
+leftright = I2cBuf
+I2cAck = 1                         'send Nak
+'GOSUB I2cInByte                    'Read Byte 2 (Low Order)
+'I2CData2.LOWBYTE = I2cBuf
+'I2cAck = 1                         'send Nak
+'GOSUB I2cInByte                    'read Byte 3 (Control Word)
+'I2cAck = 1                         'send Nak
+'I2c_mydata = I2cBuf
+GOSUB I2cStop
+
+
+
+I2cAddr = $95                      'Device Read Address
+GOSUB I2cStart
+I2cBuf = I2cAddr
+GOSUB I2cOutByte                   'send Device Address
+I2cAck = 1                         'send Nak
+GOSUB I2cInByte                    'Read Byte 1 (High Order)
+'I2cData3.HIGHBYTE = I2cBuf
+updown = I2cBuf
+I2cAck = 1                         'send Nak
+'GOSUB I2cInByte                    'Read Byte 2 (Low Order)
+'I2CData3.LOWBYTE = I2cBuf
+'I2cAck = 1                         'send Nak
+'GOSUB I2cInByte                    'read Byte 3 (Control Word)
+'I2cAck = 1                         'send Nak
+'I2c_mydata = I2cBuf
+GOSUB I2cStop
+
+
+
+
+
+'DEBUG CLS,
+'     "TopSide DEBUG  ", CR,
+'     "---------------", CR,
+'     "High1.....  ", DEC forback, CR,
+'     "High2.....  ", DEC leftright, CR,
+'     "High3.....  ", DEC updown, CR
+
+
+
+
+'--------------------------------------------------------------------------------------------
+' Forward Backward
+'--------------------------------------------------------------------------------------------
+
+IF forback < 5 THEN
+forback = 255
+forback = forback & 254   'make it even
+forback = forback + 1     ' + 1 to make it odd
+'DEBUG     "Backmax...  ", DEC forback, CR
+'PWM 2, forback, 100
+'SEROUT 16, 16780, [DEC forback]
+GOTO Left_right
+ENDIF
+
+
+IF forback < 20 THEN
+'forback = I2cData1.HIGHBYTE
+forback=50-forback
+forback=forback*5
+forback = forback & 254   'make it even
+forback = forback + 1     ' + 1 to make it odd
+'DEBUG     "Backfast..  ", DEC forback, CR
+'PWM 2, forback, 100
+'SEROUT 16, 16780, [DEC forback]
+GOTO Left_right
+ENDIF
+
+IF forback < 50 THEN
+'forback = I2cData1.HIGHBYTE
+forback=50-forback
+forback=forback*4
+forback = forback & 254   'make it even
+forback = forback + 1     ' + 1 to make it odd
+'DEBUG     "Backward..  ", DEC forback, CR
+'PWM 2, forback, 100
+'SEROUT 16, 16780, [DEC forback]
+GOTO Left_right
+ENDIF
+
+IF forback > 122 THEN
+forback = 255
+forback = forback & 254
+'DEBUG     "Formax...  ", DEC forback, CR
+'PWM 3, forback, 100
+'SEROUT 16, 16780, [DEC forback]
+GOTO Left_right
+ENDIF
+
+IF forback > 107 THEN
+forback = forback //1000
+forback = forback - 76
+forback = forback * 5
+forback = forback & 254
+'DEBUG     "Forfast...  ", DEC forback, CR
+'PWM 3, forback, 100
+'SEROUT 16, 16780, [DEC forback]
+GOTO Left_right
+ENDIF
+
+IF forback > 77 THEN
+forback = forback //1000
+forback = forback - 76
+forback = forback * 4
+forback = forback & 254
+'DEBUG     "Forward...  ", DEC forback, CR
+'PWM 3, forback, 100
+'SEROUT 16, 16780, [DEC forback]
+GOTO Left_right
+ENDIF
+
+forback = 0
+GOTO Left_right
+
+'--------------------------------------------------------------------------------------------
+' Left Right
+'--------------------------------------------------------------------------------------------
+
+
+Left_right:
+
+IF leftright < 5 THEN
+leftright = 255
+leftright = leftright & 254   'make it even
+leftright = leftright + 1     ' + 1 to make it odd
+'DEBUG     "Leftmax...  ", DEC leftright, CR,
+'PWM 4, leftright, 100
+GOTO Up_down
+ENDIF
+
+IF leftright < 20 THEN
+'leftright = I2cData2.HIGHBYTE
+leftright=50-leftright
+leftright=leftright*5
+leftright = leftright & 254   'make it even
+leftright = leftright + 1     ' + 1 to make it odd
+'DEBUG     "Leftfast..  ", DEC leftright, CR,
+'PWM 4, leftright, 100
+GOTO Up_down
+ENDIF
+
+IF leftright < 50 THEN
+'leftright = I2cData2.HIGHBYTE
+leftright=50-leftright
+leftright=leftright*4
+leftright = leftright & 254   'make it even
+leftright = leftright + 1     ' + 1 to make it odd
+'DEBUG     "Left..  ", DEC leftright, CR,
+'PWM 4, leftright, 100
+'SEROUT 16, 16780, [DEC leftright]
+GOTO Up_down
+ENDIF
+
+IF leftright > 122 THEN
+leftright = 255
+leftright=leftright&254
+'DEBUG     "Rightmax...  ", DEC leftright, CR,
+'PWM 1, leftright, 100
+'SEROUT 16, 16780, [DEC leftright]
+GOTO Up_down
+ENDIF
+
+IF leftright > 107 THEN
+leftright = leftright //1000
+leftright = leftright - 76
+leftright = leftright * 5
+leftright = leftright & 254
+'DEBUG     "Rightfast...  ", DEC leftright, CR,
+'PWM 1, leftright, 100
+'SEROUT 16, 16780, [DEC leftright]
+GOTO Up_down
+ENDIF
+
+IF leftright > 77 THEN
+leftright = leftright //1000
+leftright = leftright - 76
+leftright = leftright * 4
+leftright = leftright & 254
+'DEBUG     "Right...  ", DEC leftright, CR,
+'PWM 1, leftright, 100
+GOTO Up_down
+ENDIF
+
+leftright = 0
+GOTO Up_down
+
+
+'--------------------------------------------------------------------------------------------
+' Up Down
+'--------------------------------------------------------------------------------------------
+
+Up_down:
+
+IF updown < 5 THEN
+updown = 255
+updown = updown & 254   'make it even
+updown = updown + 1     ' + 1 to make it odd
+'DEBUG     "Downmax...  ", DEC updown, CR,
+'PWM 11, updown, 100
+'SEROUT 16, 16780, [DEC updown]
+GOTO Send
+ENDIF
+
+IF updown < 20 THEN
+'updown = I2cData3.HIGHBYTE
+updown=50-updown
+updown=updown*5
+updown = updown & 254   'make it even
+updown = updown + 1     ' + 1 to make it odd
+'DEBUG     "Downfast..  ", DEC updown, CR,
+'PWM 11, updown, 100
+'SEROUT 16, 16780, [DEC updown]
+GOTO Send
+ENDIF
+
+IF updown < 50 THEN
+'updown = I2cData3.HIGHBYTE
+updown=50-updown
+updown=updown*4
+updown = updown & 254   'make it even
+updown = updown + 1     ' + 1 to make it odd
+'DEBUG     "Down..  ", DEC updown, CR,
+'PWM 11, updown, 100
+'SEROUT 16, 16780, [DEC updown]
+GOTO Send
+ENDIF
+
+IF updown > 122 THEN
+updown = 255
+updown = updown & 254
+'DEBUG     "Upmax...  ", DEC updown, CR,
+'PWM 12, updown, 100
+'SEROUT 16, 16780, [DEC updown]
+GOTO Send
+ENDIF
+
+IF updown > 107 THEN
+updown = updown //1000
+updown = updown - 76
+updown = updown * 5
+updown = updown & 254
+'DEBUG     "Upfast...  ", DEC updown, CR,
+'PWM 12, updown, 100
+'SEROUT 16, 16780, [DEC updown]
+GOTO Send
+ENDIF
+
+IF updown > 77 THEN
+updown = updown //1000
+updown = updown - 76
+updown = updown * 4
+updown = updown & 254
+'DEBUG     "Up...  ", DEC updown, CR,
+'PWM 12, updown, 100
+'SEROUT 16, 16780, [DEC updown]
+GOTO Send
+ENDIF
+
+updown = 0
+GOTO Send
+
+Send:
+
+
+
+
+'PWM 3, forback, 100
+'PWM 1, leftright, 100
+'PWM 12, updown, 100
+
+'DEBUG CLS,
+'     "TopSide DEBUG  ", CR,
+'     "---------------", CR,
+'     "High1.....  ", DEC forback, CR,
+'     "High2.....  ", DEC leftright, CR,
+'     "High3.....  ", DEC updown, CR
+
+
+
+SEROUT 16, 16468, [forback]
+PAUSE 1
+SEROUT 16, 16468, [leftright]
+PAUSE 1
+SEROUT 16, 16468, [updown]
+
+
+'PAUSE 10
+'SEROUT 16, 16780, [500]
+
+GOTO Main     'go back to run again
+
+'--------------------------------------------------------------------------------------------
+' AD0 I2C subroutines
+'--------------------------------------------------------------------------------------------
+
+I2cByteWrite:                            ' writes I2CData1.LOWBYTE to I2cReg at I2cAddr
+GOSUB I2cStart
+I2cBuf = I2cAddr
+GOSUB I2cOutByte                         ' send device address
+I2cBuf = I2CData.LOWBYTE
+GOSUB I2cOutByte                         ' send the data
+GOSUB I2cStop
+RETURN
+
+I2cWordWrite:                            ' writes I2cData to I2cReg at I2cAddr
+GOSUB I2cStart
+I2cBuf = I2cAddr
+GOSUB I2cOutByte                         ' send device address
+I2cBuf = I2cData.HIGHBYTE
+GOSUB I2cOutByte                         ' send the data - high byte
+I2cBuf = I2CData.LOWBYTE
+GOSUB I2cOutByte                         ' send the data - low byte
+GOSUB I2cStop
+RETURN
+
+I2CByteRead:
+GOSUB I2cStart
+I2cBuf = I2cAddr
+GOSUB I2cOutByte                         ' send device address
+I2cAck = 0                               ' send Nak
+GOSUB I2cInByte
+I2CData.LOWBYTE = I2cBuf                 ' read the data
+I2cData.HIGHBYTE = 0
+GOSUB I2cStop
+RETURN
+
+I2CWordRead:
+GOSUB I2cStart
+I2cBuf = I2cAddr
+GOSUB I2cOutByte                         ' send device address
+GOSUB I2cStart                           ' repeated start
+I2cBuf = I2cAddr                         ' Commented as I send correct address      | 1
+I2cAck = 1                               ' send Ack
+GOSUB I2cOutByte                         ' send device address (with read set)
+GOSUB I2cInByte
+I2cData.HIGHBYTE = I2cBuf                ' read the data
+I2cAck = 0                               ' send Nak
+GOSUB I2cInByte
+I2CData.LOWBYTE = I2cBuf
+GOSUB I2cStop
+RETURN
+
+
+
+'--------------------------------------------------------------------------------------------
+' Standard I2C subroutines
+'--------------------------------------------------------------------------------------------
+
+I2cOutByte:
+SHIFTOUT SDA, SCL, MSBFIRST, [I2cBuf\8]
+INPUT SDA
+HIGH SCL                                 ' clock in the ack' bit
+LOW SCL
+RETURN
+
+I2cInByte:
+SHIFTIN SDA, SCL, MSBPRE, [I2cBuf\8]
+'SDAdir = I2cAck
+HIGH SCL                                 ' clock out the ack' bit
+LOW SCL
+INPUT SDA
+RETURN
+
+I2cStart:                                 ' I2C start bit sequence
+HIGH SDA
+HIGH SCL
+LOW SDA
+LOW SCL
+RETURN
+
+I2cStop:                                 ' I2C stop bit sequence
+LOW SDA
+HIGH SCL
+HIGH SDA
+RETURN

@@ -1,0 +1,90 @@
+' {$STAMP BS2px}
+' {$PBASIC 2.5}
+' {$PORT COM2}
+
+'*** PIN Declarations ***
+direc   PIN   12
+speed   PIN   0
+
+'*** Asign Varibles ***
+Fwd_Back  VAR   Byte
+L_R       VAR   Byte
+U_D       VAR   Byte
+i         VAR   Word
+Freq      VAR   Word
+Fwd_Back_holder  VAR   Byte
+L_R_holder       VAR   Byte
+U_D_holder       VAR   Byte
+Freq_holder      VAR   Word
+
+Main:
+
+SERIN 16, 16780, [Fwd_Back_holder]     'serial input=pin 16, baudmode,forward/back motor
+SERIN 16, 16780, [L_R_holder]          'serial input, baudmode, left/right motor
+SERIN 16, 16780, [U_D_holder]          'serial inpur, baudmode, up/down motor
+freq_holder=256
+'DEBUG Fwd_back
+'DEBUG L_R
+'DEBUG U_D
+'fwd_back_holder=100
+'l_r_holder=100
+'u_d_holder=100
+
+
+'DIRECTION**************
+
+IF Fwd_Back_holder//2=0 THEN           'determines if byte is even or odd for Fwd/Back motor
+HIGH 6                          'if byte is even, pin 6 reads high, pin 7 reads low
+LOW  7
+ELSE
+LOW 6                           'if byte is odd, pin 6 read low, pin 7 reads high
+HIGH 7
+ENDIF                           'ends the statement
+
+IF L_R_holder//2=0 THEN                'determines if byte is even or odd for left/right motor
+HIGH 8                          'if byte is even, pin 8 reads high, pin 9 reads low
+LOW  9
+ELSE
+LOW 8                           'if byte is odd, pin 8 reads low, pin 9 reads high
+HIGH 9
+ENDIF                           'ends statement
+
+IF U_D_holder//2=0 THEN                'determines if byte is even or odd for up/down motor
+HIGH 10                         'if byte is even, pin 10 reads high, pin 11 reads low
+LOW  11
+ELSE
+LOW 10                          'if byte is odd, pin 10 reads low, pin 11 reads high
+HIGH 11
+ENDIF                           'ends statement
+i=1
+big_loop:
+fwd_back=fwd_back_holder/10
+l_r=l_r_holder/10
+u_d=u_d_holder/10
+freq=freq_holder/10
+
+'SPEED********
+HIGH 3
+HIGH 4
+HIGH 5
+Frequency_loop:
+IF fwd_back = 0   THEN
+      LOW 3
+      ENDIF
+IF L_r= 0   THEN
+      LOW 4
+      ENDIF
+IF u_d = 0   THEN
+      LOW 5
+      ENDIF
+
+fwd_back = fwd_back - 1
+l_r = l_r - 1
+u_d = u_d - 1
+freq = freq - 1
+IF freq <>0 THEN Frequency_loop
+i=i-1
+IF i<> 0 THEN big_loop
+
+  GOTO Main                     'go back to run again
+END
